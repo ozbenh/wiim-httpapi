@@ -7347,14 +7347,54 @@ paths:
         - Other
       summary: Squeezelite get state
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=Squeezelite:getState
+
+        Returns the state of the built-in Squeezelite / Lyrion Music Server
+        (LMS, formerly Logitech Media Server) client. When active, LMS playback
+        shows as `mode` 34 in getPlayerStatus.
       externalDocs:
-        description: "More (undocumented) API calls"
-        url: "https://github.com/DanBrezeanu/wiim-extended-http-api/issues/3"
+        description: WiiM Extended HTTP API by DanBrezeanu
+        url: "https://github.com/DanBrezeanu/wiim-extended-http-api"
+      x-sources:
+        - "DanBrezeanu wiim-extended-http-api (Squeezelite:getState example)"
+        - "pywiim (pywiim/api/lms.py)"
       operationId: squeezeliteGetState
       responses:
         "200":
           description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                properties:
+                  default_server:
+                    type: string
+                    description: "Configured LMS server host:port"
+                    example: "192.168.1.4:3483"
+                  state:
+                    type: string
+                    description: "Connection state"
+                    enum: [discovering, connected]
+                    example: "connected"
+                  discover_list:
+                    type: array
+                    description: "Discovered LMS servers (host:port)"
+                    items:
+                      type: string
+                    example: ["192.168.1.4:3483", "192.168.1.123:3483"]
+                  connected_server:
+                    type: string
+                    example: "192.168.1.4:3483"
+                  auto_connect:
+                    type: integer
+                    description: "1 = auto-connect enabled, 0 = disabled"
+                    example: 1
+              example:
+                default_server: "192.168.1.4:3483"
+                state: "connected"
+                discover_list: ["192.168.1.4:3483", "192.168.1.123:3483"]
+                connected_server: "192.168.1.4:3483"
+                auto_connect: 1
   /getSetupRouterInfo:
     get:
       deprecated: true
