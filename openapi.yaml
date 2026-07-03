@@ -3994,15 +3994,22 @@ paths:
               }
             ]
           }
-        A standalone (ungrouped) device returns {"slaves":0,"wmrm_version":"4.2"}
-        with no slave_list. Slaves whose wmrm_version < 4.2 are not compatible
-        with 4.2+ masters. Slave entries carry uuid but a slave device queried
-        directly reports only master_uuid (not master_ip).
+        A standalone (ungrouped) device returns a short object with no
+        slave_list. On a WiiM Ultra (fw wmrm 4.3, verified) this is:
+          {"slaves": 0, "wmrm_version": "4.3", "surround": 0, "group_type": -1}
+        i.e. newer WiiM firmware adds `surround` and `group_type` fields.
+        Slaves whose wmrm_version < 4.2 are not compatible with 4.2+ masters.
+        Slave entries carry uuid but a slave device queried directly reports
+        only master_uuid (not master_ip).
+
+        NOTE: the `multiroom:` prefix is REQUIRED. Sending bare `getSlaveList`
+        returns `unknown command`.
       externalDocs:
         description: LinkPlayAPI by n4archive
         url: "https://github.com/n4archive/LinkPlayAPI/blob/master/api.md"
       x-sources:
         - "developer.arylic.com/httpapi (modern lowercase slave_list shape)"
+        - "real device: WiiM Ultra, wmrm 4.3 (standalone response w/ surround, group_type)"
         - "pywiim (pywiim/models.py; slave reports master_uuid only)"
       operationId: multiroomGetSlaveList
       responses:
@@ -4022,8 +4029,16 @@ paths:
                     example: 1
                   wmrm_version:
                     type: string
-                    description: "Multiroom protocol version (e.g. 2.0 = older, 4.2 = modern)"
+                    description: "Multiroom protocol version (e.g. 2.0 = older, 4.2/4.3 = modern)"
                     example: "4.2"
+                  surround:
+                    type: integer
+                    description: "Surround mode flag (newer WiiM firmware); 0 when off"
+                    example: 0
+                  group_type:
+                    type: integer
+                    description: "Group type (newer WiiM firmware); -1 when standalone"
+                    example: -1
                   slave_list:
                     type: array
                     items:
@@ -4039,20 +4054,30 @@ paths:
                         mute: {type: integer, example: 0}
                         battery_percent: {type: integer, example: 0}
                         battery_charging: {type: integer, example: 0}
-              example:
-                slaves: 1
-                wmrm_version: "4.2"
-                slave_list:
-                  - name: "WiiM Pro"
-                    uuid: "uuid:FF31F09E1A5020113B0A3918"
-                    ip: "192.168.1.101"
-                    version: "4.2"
-                    type: "WiiMu-A31"
-                    channel: 0
-                    volume: 63
-                    mute: 0
-                    battery_percent: 0
-                    battery_charging: 0
+              examples:
+                grouped:
+                  summary: Master with one grouped slave (modern shape)
+                  value:
+                    slaves: 1
+                    wmrm_version: "4.2"
+                    slave_list:
+                      - name: "WiiM Pro"
+                        uuid: "uuid:FF31F09E1A5020113B0A3918"
+                        ip: "192.168.1.101"
+                        version: "4.2"
+                        type: "WiiMu-A31"
+                        channel: 0
+                        volume: 63
+                        mute: 0
+                        battery_percent: 0
+                        battery_charging: 0
+                standalone_wiim_ultra:
+                  summary: Standalone WiiM Ultra (verified, wmrm 4.3)
+                  value:
+                    slaves: 0
+                    wmrm_version: "4.3"
+                    surround: 0
+                    group_type: -1
   /multiroom:SlaveKickout:{ip}:
     get:
       tags:
