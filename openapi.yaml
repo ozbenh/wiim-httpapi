@@ -9205,9 +9205,16 @@ components:
         Title:
           type: string
           description: |-
-            Track title, hex-encoded UTF-8. Decode with
-            bytes.fromhex(s).decode("utf-8"), then HTML-unescape (the decoded
-            string may contain HTML entities such as &amp;).
+            Track title, hex-encoded UTF-8, that ALSO carries HTML entities
+            under the hood. Full decode (per illianoaoi/Wiim-Dashboard
+            parse.ts):
+              1. If the value is even-length and all hex digits, decode the
+                 hex to UTF-8 bytes and strip trailing NUL bytes. If the
+                 result is mostly U+FFFD replacement chars, keep the raw value.
+              2. HTML-unescape the result: numeric entities (&#xHH; and &#DDD;)
+                 and named entities (&lt; &gt; &quot; &apos; &amp;), decoding
+                 &amp; LAST so "&amp;lt;" resolves correctly.
+            Sentinel values "unknown" / "un_known" / "none" mean "no value".
           example: "4D6F726E696E67204C69676874"
         Artist:
           type: string
