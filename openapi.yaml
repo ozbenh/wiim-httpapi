@@ -8713,10 +8713,18 @@ components:
         plm_support:
           type: string
           description: |-
-            This is a bit mask, each bit stands for an external input
-            source: bit1: LineIn (Aux support) bit2: Bluetooth support
-            bit3: USB support bit4: Optical support bit6: Coaxial
-            support bit8: LineIn 2 support bit15: USBDAC support
+            Bit mask of supported external input sources. Usually reported in
+            hex (e.g. "0x6"). Clients enumerate selectable inputs from this.
+
+            Documented bit meanings:
+              bit1: LineIn (Aux)  bit2: Bluetooth  bit3: USB  bit4: Optical
+              bit6: Coaxial  bit8: LineIn 2  bit15: USBDAC
+
+            Fuller decimal weights observed in the field
+            (illianoaoi/Wiim-Dashboard):
+              2 line-in, 4 bluetooth, 8 usb, 16 optical, 32 rca, 64 coaxial,
+              256 line-in2, 512 xlr, 1024 hdmi, 2048 cd, 32768 usb-dac,
+              65536 phono, 262144 optical2, 524288 coaxial2, 4194304 arc.
             Others are reserved or not used.
           example: "0x6"
         mqtt_support:
