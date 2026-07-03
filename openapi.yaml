@@ -8896,6 +8896,13 @@ components:
           type: string
           description: The group name of the device that it belongs to
           example: "WiiM Mini-8FA2"
+        InputList:
+          type: string
+          description: |-
+            Comma-separated list of available input source names (present on
+            some firmware). Used to enumerate selectable sources. Values are
+            raw device labels, e.g. "wifi,bluetooth,line-in,optical".
+          example: "wifi,bluetooth,line-in,optical"
     DeviceDebugInfo: # Can be referenced as "#/components/schemas/DeviceDebugInfo"
       type: object
       properties:
