@@ -2818,6 +2818,40 @@ paths:
               schema: {}
       tags:
         - Alarm clock
+  "/alarmDel:{n}":
+    get:
+      summary: Delete an alarm slot
+      description: |-
+        http://10.10.10.254/httpapi.asp?command=alarmDel:n
+
+        Deletes the alarm in slot n (0-2). An alternative to
+        setAlarmClock:n:0 (trigger 0 = cancel). Response is 'OK'.
+
+        Note: sourced from a community CLI; not in the official PDF. Behavior
+        may vary by firmware.
+      externalDocs:
+        description: "linkplay-cli"
+        url: "https://github.com/ramikg/linkplay-cli"
+      x-sources:
+        - "linkplay-cli (linkplay_cli/cli.py:382)"
+      operationId: deleteAlarmClock
+      parameters:
+        - name: "n"
+          in: path
+          required: true
+          schema:
+            type: integer
+            enum:
+              - 0
+              - 1
+              - 2
+          description: The alarm clock slot to delete (0-2)
+          example: 0
+      responses:
+        "200":
+          $ref: "#/components/responses/StringOK"
+      tags:
+        - Alarm clock
 
   # ====================================================================
   # Source input switch
