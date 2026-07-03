@@ -7919,6 +7919,40 @@ paths:
       responses:
         "200":
           description: Successful response
+  /getPlayerStatusEx:
+    get:
+      tags:
+        - Playback control
+      summary: Get the extended playback status
+      description: |-
+        Makes a call to https://10.10.10.254/httpapi.asp?command=getPlayerStatusEx
+
+        Extended variant of `getPlayerStatus`. Returns the same fields as
+        `getPlayerStatus` plus additional fields on newer firmware (e.g. `RSSI`,
+        `WifiChannel`, and codec/quality fields on some models).
+
+        Quirk: preferred over `getPlayerStatus` by most modern clients (pywiim,
+        linkplay-cli). Some older/other-vendor firmwares do not implement it and
+        return `unknown command` - fall back to `getPlayerStatus` in that case.
+
+        Quirk: `Title`, `Artist` and `Album` are hex-encoded UTF-8 strings that
+        may additionally contain HTML entities. Decode with
+        bytes.fromhex(s).decode("utf-8") then HTML-unescape.
+      externalDocs:
+        description: "pywiim / linkplay-cli (real-device usage)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/api/parser.py, models.py)"
+        - "linkplay-cli (linkplay_cli/cli.py:137)"
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/PlayerStatus"
+      operationId: getPlayerStatusEx
 
 externalDocs:
   url: "https://github.com/cvdlinden/wiim-httpapi"
