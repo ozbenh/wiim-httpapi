@@ -9255,25 +9255,35 @@ components:
           example: "6"
     TrackMetadata: # Can be referenced as "#/components/schemas/TrackMetadata"
       type: object
+      description: |-
+        Response of getMetaInfo.
+
+        NOTE: unlike getPlayerStatus/getPlayerStatusEx, the string fields here
+        (title/artist/album/...) are returned as clean, plain UTF-8 - they are
+        NOT hex-encoded and need no decoding. WiiM may occasionally leave HTML
+        entities in them, but no hex step applies.
+
+        QUIRK: some fields (notably bitRate and trackId) may be the literal
+        string "unknow" (sic) or "unknown" as a placeholder for "no value".
       properties:
         metaData:
           type: object
           properties:
             album:
               type: string
-              description: Album name
+              description: Album name (plain UTF-8)
               example: Country Heat
             title:
               type: string
-              description: Track title
+              description: Track title (plain UTF-8)
               example: Old Dirt Roads
             subtitle:
               type: string
-              description: Subtitle
+              description: "Subtitle. When artist is the sentinel \"unknow\", clients often fall back to subtitle."
               example: ""
             artist:
               type: string
-              description: Artist name
+              description: "Artist name (plain UTF-8). May be the sentinel \"unknow\" (sic)."
               example: Owen Riegling
             albumArtURI:
               type: string
@@ -9285,15 +9295,22 @@ components:
               example: "44100"
             bitDepth:
               type: string
-              description: Bit depth in bits
+              description: |-
+                Decoded PCM bit depth in bits. QUIRK: the device reports the
+                decoded PCM bit depth (e.g. 16) even for lossy streams, so
+                bitDepth alone cannot distinguish lossy from lossless - use
+                bitRate for that (a 320 kbps OGG still reports 16-bit).
               example: "16"
             bitRate:
               type: string
-              description: Bit rate in kbps
+              description: |-
+                Bit rate. Unit (bps vs kbps) can vary by firmware. May be the
+                literal "unknow"/"unknown" when not available. This is the
+                reliable signal for lossy-vs-lossless quality tiers.
               example: "63"
             trackId:
               type: string
-              description: Track ID
+              description: "Track ID. May be the sentinel \"unknow\"/\"unknown\"."
               example: s6707
     PresetList: # Can be referenced as "#/components/schemas/PresetList"
       type: object
