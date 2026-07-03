@@ -2822,15 +2822,31 @@ paths:
     get:
       summary: Set audio output mode
       description: |-
-        Field Description
-        Hardware Interface output mode:
-        1: AUDIO_OUTPUT_SPDIF_MODE
-        2: AUDIO_OUTPUT_AUX_MODE
-        3: AUDIO_OUTPUT_COAX_MODE
-        Response is 'OK'
+        Sets the hardware audio output interface. Response is 'OK'.
+
+        Officially documented modes:
+          1: AUDIO_OUTPUT_SPDIF_MODE (optical)
+          2: AUDIO_OUTPUT_AUX_MODE (line out) - primary
+          3: AUDIO_OUTPUT_COAX_MODE (coax)
+
+        Additional modes observed on WiiM hardware (community / pywiim):
+          0: Line Out (undocumented but works)
+          4: Bluetooth Out - on WiiM Ultra this is Headphone Out when the
+             companion `source` flag is 0, Bluetooth when 1
+          7: HDMI ARC (WiiM Amp Ultra)
+          8: USB Out (WiiM Ultra)
+
+        QUIRK: mode 6 was incorrectly documented as USB in an older WiiM spec.
+        On the Ultra, modes 5-7 all revert to mode 4; USB Out is mode 8, not 6.
       externalDocs:
         description: HTTP API for WiiM PRODUCTS Version 1.2
         url: "https://www.wiimhome.com/pdf/HTTP%20API%20for%20WiiM%20Products.pdf"
+      x-sources:
+        - "pywiim (pywiim/api/constants.py:525-559; issue #160)"
+        - "illianoaoi/Wiim-Dashboard (docs/WIIM-API.md - headphones mode 4)"
+      x-device-support:
+        wiim_ultra: "modes 0-4,7,8 (5-7 collapse to 4; USB=8)"
+        wiim_amp_ultra: "adds HDMI ARC (7)"
       parameters:
         - name: "n"
           in: path
@@ -2838,14 +2854,21 @@ paths:
           schema:
             type: integer
             enum:
+              - 0
               - 1
               - 2
               - 3
+              - 4
+              - 7
+              - 8
           description: |-
-            Hardware Interface output mode:
-            1: AUDIO_OUTPUT_SPDIF_MODE
-            2: AUDIO_OUTPUT_AUX_MODE
-            3: AUDIO_OUTPUT_COAX_MODE
+            0: Line Out (undocumented)
+            1: SPDIF / Optical
+            2: AUX / Line Out (primary)
+            3: Coax
+            4: Bluetooth Out (Headphone Out on Ultra when source=0)
+            7: HDMI ARC (Amp Ultra)
+            8: USB Out (Ultra)
       responses:
         "200":
           $ref: "#/components/responses/StringOK"
