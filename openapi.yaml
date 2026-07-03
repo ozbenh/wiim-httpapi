@@ -1713,9 +1713,27 @@ paths:
     get:
       tags:
         - Equalizer
-      summary: Change source FX
+      summary: Enable / select the active LV2 EQ plugin
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQChangeSourceFX:<url-encoded JSON>
+
+        Turns EQ on and selects which LV2 plugin is active. GEQ and PEQ are
+        mutually exclusive: enabling one plugin implicitly disables the other.
+
+        `str` is URL-encoded JSON:
+          global:     {"pluginURI":"<uri>"}
+          per-source: {"source_name":"<src>","pluginURI":"<uri>"}
+        where <uri> is the graphic (Eq10HP) or parametric (EqNp) plugin URI.
+
+        Response is 'OK'. Disable with EQSourceOff (same payload).
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/{eq.rs,api.rs} (eq_enable; GEQ/PEQ mutual exclusion)"
+      x-device-support:
+        wiim: yes
+        arylic: "unsupported"
       operationId: eqChangeSourceFX
       parameters:
         - name: "str"
@@ -1723,10 +1741,11 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: 'URL-encoded JSON {pluginURI} or {source_name, pluginURI}'
+          example: '{"pluginURI":"http://moddevices.com/plugins/caps/EqNp"}'
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQChangeFX:{str}:
     get:
       tags:
@@ -1876,9 +1895,23 @@ paths:
     get:
       tags:
         - Equalizer
-      summary: Turn off EQ source
+      summary: Disable an LV2 EQ plugin
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQSourceOff:<url-encoded JSON>
+
+        Turns off the given LV2 EQ plugin. Counterpart to EQChangeSourceFX,
+        with the same URL-encoded JSON payload:
+          global:     {"pluginURI":"<uri>"}
+          per-source: {"source_name":"<src>","pluginURI":"<uri>"}
+        Response is 'OK'.
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/{eq.rs,api.rs} (eq_disable)"
+      x-device-support:
+        wiim: yes
+        arylic: "unsupported"
       operationId: eqSourceOff
       parameters:
         - name: "str"
@@ -1886,17 +1919,32 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: 'URL-encoded JSON {pluginURI} or {source_name, pluginURI}'
+          example: '{"pluginURI":"http://moddevices.com/plugins/caps/EqNp"}'
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQSetChannelMode:{str}:
     get:
       tags:
         - Equalizer
-      summary: Set channel mode
+      summary: Set EQ channel mode (stereo vs per-channel)
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQSetChannelMode:<value>
+
+        Sets whether EQ bands apply to both channels together ("Stereo") or
+        independently per channel ("L/R"). The channelMode value is also
+        carried inline in EQSetLV2Band / EQSetLV2SourceBand payloads.
+        Values: "Stereo" | "L/R". Response is 'OK'. WiiM (LV2 EQ) only.
+      externalDocs:
+        description: "pywiim / rustywiim (reverse-engineered)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/api/peq.py channelMode Stereo|L/R)"
+        - "rustywiim-backup old/src/eq.rs (channelMode field)"
+      x-device-support:
+        wiim: yes
+        arylic: "unsupported"
       operationId: eqSetChannelMode
       parameters:
         - name: "str"
@@ -1904,10 +1952,14 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+            enum:
+              - Stereo
+              - L/R
+          description: "Channel mode: Stereo or L/R"
+          example: "Stereo"
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQSourceSave:{str}:
     get:
       tags:
