@@ -3971,13 +3971,88 @@ paths:
         Channel	Wifi channel
         ip	IP address of the LinkPlay Boot
         version	firmware version
+
+        QUIRK - field-name casing differs by firmware. The capitalized keys
+        above (Slaves / Slave_list / Name / Ip / Version) are the OLD LinkPlay
+        (n4archive) shape. Modern WiiM and Arylic firmware use LOWERCASE keys
+        and add fields:
+          {
+            "slaves": 1,
+            "wmrm_version": "4.2",
+            "slave_list": [
+              {
+                "name": "WiiM Pro",
+                "uuid": "uuid:FF31...",
+                "ip": "192.168.1.101",
+                "version": "4.2",
+                "type": "WiiMu-A31",
+                "channel": 0,
+                "volume": 63,
+                "mute": 0,
+                "battery_percent": 0,
+                "battery_charging": 0
+              }
+            ]
+          }
+        A standalone (ungrouped) device returns {"slaves":0,"wmrm_version":"4.2"}
+        with no slave_list. Slaves whose wmrm_version < 4.2 are not compatible
+        with 4.2+ masters. Slave entries carry uuid but a slave device queried
+        directly reports only master_uuid (not master_ip).
       externalDocs:
         description: LinkPlayAPI by n4archive
         url: "https://github.com/n4archive/LinkPlayAPI/blob/master/api.md"
+      x-sources:
+        - "developer.arylic.com/httpapi (modern lowercase slave_list shape)"
+        - "pywiim (pywiim/models.py; slave reports master_uuid only)"
       operationId: multiroomGetSlaveList
       responses:
         "200":
           description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                description: |-
+                  Modern (lowercase) shape. Older firmware uses the
+                  capitalized keys documented above.
+                properties:
+                  slaves:
+                    type: integer
+                    description: Number of grouped slave devices
+                    example: 1
+                  wmrm_version:
+                    type: string
+                    description: "Multiroom protocol version (e.g. 2.0 = older, 4.2 = modern)"
+                    example: "4.2"
+                  slave_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: {type: string, example: "WiiM Pro"}
+                        uuid: {type: string, example: "uuid:FF31F09E1A5020113B0A3918"}
+                        ip: {type: string, example: "192.168.1.101"}
+                        version: {type: string, example: "4.2"}
+                        type: {type: string, description: "Hardware type, e.g. WiiMu-A31", example: "WiiMu-A31"}
+                        channel: {type: integer, description: "0 stereo, 1 left, 2 right", example: 0}
+                        volume: {type: integer, example: 63}
+                        mute: {type: integer, example: 0}
+                        battery_percent: {type: integer, example: 0}
+                        battery_charging: {type: integer, example: 0}
+              example:
+                slaves: 1
+                wmrm_version: "4.2"
+                slave_list:
+                  - name: "WiiM Pro"
+                    uuid: "uuid:FF31F09E1A5020113B0A3918"
+                    ip: "192.168.1.101"
+                    version: "4.2"
+                    type: "WiiMu-A31"
+                    channel: 0
+                    volume: 63
+                    mute: 0
+                    battery_percent: 0
+                    battery_charging: 0
   /multiroom:SlaveKickout:{ip}:
     get:
       tags:
