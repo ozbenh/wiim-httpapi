@@ -480,7 +480,7 @@ paths:
       description: |
         https://10.10.10.254/httpapi.asp?command=setPlayerCmd:loopmode:n
 
-        n = 
+        n =
         - -1: ...
         - 0: Shuffle disabled, Repeat enabled - loop
         - 1: Shuffle disabled, Repeat enabled - loop once
@@ -488,9 +488,35 @@ paths:
         - 3: Shuffle enabled, Repeat disabled
         - 4: Shuffle disabled, Repeat disabled
         - 5: Shuffle enabled, Repeat enabled - loop once
+
+        QUIRK - write value != read value. The value you SET here is not the
+        same encoding as the `loop` field returned by getPlayerStatus. On WiiM
+        firmware, setting loopmode:0 (repeat all) reads back as loop=4; the
+        write and read scales differ. Do not assume `set X` then `read` returns
+        X. Older python-linkplay / Home Assistant enums mis-mapped these on
+        current WiiM firmware (would set Repeat-One when asked for Repeat-All).
+
+        QUIRK - vendor-specific encoding. Arylic firmware uses a different
+        loopmode scale than WiiM:
+          Arylic: 0=repeat_all, 1=repeat_one, 2=shuffle+repeat_all,
+                  3=shuffle, 4=normal, 5=shuffle+repeat_one
+          WiiM:   0=repeat_all, 1=repeat_one, 2=shuffle(+repeat),
+                  3=shuffle_no_loop, 4=normal
+        A legacy bitfield encoding also exists on old firmware
+        (1=repeat_one, 2=repeat_all, 4=shuffle, 3 invalid).
+
+        QUIRK - effective only for device-managed queues. loopmode/shuffle
+        take effect only when `mode` = 10 (network) or 11 (USB), where the
+        device owns the queue. For AirPlay (mode 1) and Spotify Connect
+        (mode 31) loopmode is functionally ignored; for Spotify, local changes
+        do not sync to the Spotify cloud (use the Spotify Web API instead).
       externalDocs:
         description: HTTP API for WiiM PRODUCTS Version 1.2
         url: "https://www.wiimhome.com/pdf/HTTP%20API%20for%20WiiM%20Products.pdf"
+      x-sources:
+        - "pywiim (pywiim/api/loop_mode.py - WiiM/Arylic/legacy tables; ADR 008)"
+        - "Wiim-Dashboard (docs/WIIM-API.md - loop vs loopmode asymmetry)"
+        - "developer.arylic.com/httpapi (Arylic loop enum)"
       parameters:
         - name: "n"
           in: path
