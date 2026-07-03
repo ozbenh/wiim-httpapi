@@ -1312,9 +1312,15 @@ paths:
 
         JSON Response:
         {"EQStat":"On"} or {"EQStat":"Off"}
+
+        QUIRK: on some WiiM firmware (e.g. WiiM Pro Linkplay 4.8) this command
+        returns `unknown command`. As a fallback, read the `EQStat` field from
+        the EQGetBand response instead, which reports the same On/Off state.
       externalDocs:
         description: HTTP API for WiiM PRODUCTS Version 1.2
         url: "https://www.wiimhome.com/pdf/HTTP%20API%20for%20WiiM%20Products.pdf"
+      x-sources:
+        - "pywiim (EQGetStat unsupported on WiiM Pro 4.8; use EQGetBand.EQStat)"
       parameters: []
       responses:
         "200":
@@ -1391,11 +1397,27 @@ paths:
         http://10.10.10.254/httpapi.asp?command=EQLoad:xxx
 
 
-        Note: xxx is the one of the name in the list returned by EQGetList,
+        Note: xxx is one of the names in the list returned by EQGetList,
         i.e., EQLoad:Flat
+
+        QUIRK - space encoding: multi-word preset names have their spaces
+        encoded as '+', e.g. EQLoad:Bass+Booster (not %20 and not a literal
+        space).
+
+        QUIRK - Arylic EQ is read-only: on Arylic / Up2Stream devices the EQ
+        set commands (EQLoad, EQOn/EQOff) return `unknown command`; EQ can only
+        be read there. Arylic also removed `equalizer` / `getEqualizer` in
+        their v1.0.1 firmware.
       externalDocs:
         description: HTTP API for WiiM PRODUCTS Version 1.2
         url: "https://www.wiimhome.com/pdf/HTTP%20API%20for%20WiiM%20Products.pdf"
+      x-sources:
+        - "DanBrezeanu wiim-extended-http-api (Bass+Booster space encoding)"
+        - "pywiim (Arylic EQ read-only)"
+        - "developer.arylic.com/httpapi (equalizer/getEqualizer removed v1.0.1)"
+      x-device-support:
+        wiim: yes
+        arylic: "read-only (set returns unknown command)"
       parameters:
         - name: name
           in: path
