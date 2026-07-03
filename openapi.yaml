@@ -7953,6 +7953,226 @@ paths:
               schema:
                 $ref: "#/components/schemas/PlayerStatus"
       operationId: getPlayerStatusEx
+  /getTriggeroutStatus:
+    get:
+      tags:
+        - Device control
+      summary: Get 12V trigger output status
+      description: |-
+        https://10.10.10.254/httpapi.asp?command=getTriggeroutStatus
+
+        Reads the state of the 12V trigger output. WiiM Ultra / Pro / Pro Plus
+        only; other hardware returns an error/unknown-command payload.
+      externalDocs:
+        description: "pywiim (issue #13)"
+        url: "https://github.com/mjcumming/pywiim/issues/13"
+      x-sources:
+        - "pywiim (pywiim/api/misc.py, api/constants.py)"
+      x-device-support:
+        wiim_ultra: yes
+        wiim_pro: yes
+        wiim_pro_plus: yes
+        other: "unknown command / unsupported"
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    description: "1 = trigger on, 0 = trigger off"
+                    example: 0
+  /setTriggeroutStatus:{n}:
+    get:
+      tags:
+        - Device control
+      summary: Set 12V trigger output status
+      description: |-
+        https://10.10.10.254/httpapi.asp?command=setTriggeroutStatus:1
+
+        Turns the 12V trigger output on (1) or off (0). WiiM Ultra / Pro /
+        Pro Plus only.
+      externalDocs:
+        description: "pywiim (issue #13)"
+        url: "https://github.com/mjcumming/pywiim/issues/13"
+      x-sources:
+        - "pywiim (pywiim/api/misc.py)"
+      x-device-support:
+        wiim_ultra: yes
+        wiim_pro: yes
+        wiim_pro_plus: yes
+        other: "unknown command / unsupported"
+      parameters:
+        - name: "n"
+          in: path
+          required: true
+          description: "1 = on, 0 = off"
+          schema:
+            type: integer
+            enum: [0, 1]
+          example: 1
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+  /getSpdifOutSampleRate:
+    get:
+      tags:
+        - Audio output control
+      summary: Get current SPDIF output sample rate
+      description: |-
+        https://10.10.10.254/httpapi.asp?command=getSpdifOutSampleRate
+
+        Returns the current SPDIF (optical/coax) output sample rate in Hz as a
+        string, or an empty value when SPDIF output is inactive.
+      externalDocs:
+        description: "pywiim"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/api/constants.py:381)"
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "48000"
+  /getMCUASCIICmd:LED:
+    get:
+      tags:
+        - Device control
+      summary: Get LED state via MCU ASCII command (Arylic)
+      description: |-
+        https://10.10.10.254/httpapi.asp?command=getMCUASCIICmd:LED
+
+        Arylic/Up2Stream LED-state query via the MCU ASCII channel. Returns a
+        plain-text payload such as `LED:1` / `LED:0`. Absent on some Arylic
+        firmwares. WiiM devices use LED_SWITCH_GET / setLED instead.
+      externalDocs:
+        description: "pywiim"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/api/constants.py:392)"
+      x-device-support:
+        arylic: partial
+        wiim: "use LED_SWITCH_GET / setLED"
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "LED:1"
+  /getAudioInputEnable:
+    get:
+      tags:
+        - Source input switch
+      summary: Get per-input enablement metadata (WiiM)
+      description: |-
+        https://10.10.10.254/httpapi.asp?command=getAudioInputEnable
+
+        Discovered from WiiM app traffic (pywiim issue #20). Returns the list of
+        input modes with an enable flag per mode. Treat modes as raw device
+        labels. WiiM-specific; other vendors return unknown-command / empty.
+      externalDocs:
+        description: "pywiim (issue #20)"
+        url: "https://github.com/mjcumming/pywiim/issues/20"
+      x-sources:
+        - "pywiim (docs/design/WIIM_DISCOVERED_APIS.md)"
+      x-device-support:
+        wiim_pro: "yes (fw Linkplay.4.8.814756 confirmed)"
+        arylic_h50: "unknown command (fw Linkplay.4.6.529755)"
+        up2stream_amp_v4: "unsupported (fw 4.6.415145)"
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                properties:
+                  ver:
+                    type: string
+                    example: "1.0"
+                  audioInput:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mode:
+                          type: string
+                          example: "optical"
+                        enable:
+                          type: integer
+                          example: 1
+              example:
+                ver: "1.0"
+                audioInput:
+                  - {mode: "wifi", enable: 1}
+                  - {mode: "bluetooth", enable: 1}
+                  - {mode: "line-in", enable: 1}
+                  - {mode: "optical", enable: 1}
+                  - {mode: "HDMI", enable: 1}
+                  - {mode: "phono", enable: 1}
+  /GetAcousticCapability:
+    get:
+      tags:
+        - Equalizer
+      summary: Get acoustic capability blocks (WiiM)
+      description: |-
+        https://10.10.10.254/httpapi.asp?command=GetAcousticCapability
+
+        Discovered from WiiM app traffic. Reports which acoustic feature blocks
+        the device supports (graphic EQ, parametric EQ, room correction,
+        headphone EQ, subwoofer LPF, output delay, evaluation). WiiM-specific.
+      externalDocs:
+        description: "pywiim (issue #20)"
+        url: "https://github.com/mjcumming/pywiim/issues/20"
+      x-sources:
+        - "pywiim (docs/design/WIIM_DISCOVERED_APIS.md)"
+      x-device-support:
+        wiim_pro: "yes (fw Linkplay.4.8.814756 confirmed)"
+        arylic_h50: "unknown command"
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+              example:
+                Version: "1.0"
+                GEQ: {Version: "1.0"}
+                PEQ: {Version: "1.0", Filters: ["OFF", "LS", "PK", "HS", "LP", "HP"]}
+                RC: {Version: "1.0"}
+                HeadphoneEQ: {Version: "1.0"}
+                SubLPF: {Version: "1.0"}
+                Evaluation: {Version: "1.1"}
+                EQBlock: {Version: "1.0", Blocks: [{id: 1, type: "EQ"}]}
+                OutputDelay:
+                  Version: "1.0"
+                  PerOutputDelay: false
+                  EnableMicroDelay: true
+                  MinDelayUs: -1000000
+                  MaxDelayUs: 1000000
+                  StepDelayUs: 100
 
 externalDocs:
   url: "https://github.com/cvdlinden/wiim-httpapi"
