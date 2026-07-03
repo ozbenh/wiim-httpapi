@@ -1586,9 +1586,44 @@ paths:
     get:
       tags:
         - Equalizer
-      summary: Set LV2 band
+      summary: Set LV2 EQ bands (global)
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQSetLV2Band:<url-encoded JSON>
+
+        Writes EQ band values for the whole device (all sources). This is the
+        modern LV2 EQ write path (WiiM); the target EQ type is chosen by which
+        pluginURI you pass:
+          - Graphic EQ (GEQ):   http://moddevices.com/plugins/caps/Eq10HP
+          - Parametric EQ (PEQ): http://moddevices.com/plugins/caps/EqNp
+
+        `str` is a JSON object, URL-encoded (so { } " : , / become
+        %7B %7D %22 %3A %2C %2F). Shape:
+          {"pluginURI":"<uri>","channelMode":"Stereo","EQBand":[ ...bands... ]}
+
+        GEQ band entries (10 fixed bands):
+          {"param_name":"band31hz","value":<dB>} ... band16khz
+          param_names: band31hz, band63hz, band125hz, band250hz, band500hz,
+          band1khz, band2khz, band4khz, band8khz, band16khz. value in dB,
+          roughly -10..+10.
+
+        PEQ band entries (up to 10 bands, lettered a-j, 4 params each):
+          {"param_name":"a_mode","value":<m>}, {"param_name":"a_freq","value":<hz>},
+          {"param_name":"a_q","value":<q>}, {"param_name":"a_gain","value":<dB>}
+          mode: -1 Off, 0 Low-Shelf, 1 Peak, 2 High-Shelf
+          freq: 10..22000 Hz   q: 0.01..24   gain: -12..+12 dB
+          (defaults: mode Peak, q 0.25, gain 0.0). A Peak band at ~0 dB is
+          treated as Off by some clients.
+
+        `channelMode` is "Stereo" or "L/R" (per-channel). Response is 'OK'.
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/{eq.rs,api.rs} (LV2 band payloads, ranges)"
+        - "pywiim (pywiim/api/peq.py; band letters a-j, mode/freq/q/gain)"
+      x-device-support:
+        wiim: yes
+        arylic: "EQ set read-only / unsupported"
       operationId: eqSetLV2Band
       parameters:
         - name: "str"
@@ -1596,17 +1631,36 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: "URL-encoded JSON {pluginURI, channelMode, EQBand[...]} (see description)"
+          example: '{"pluginURI":"http://moddevices.com/plugins/caps/Eq10HP","channelMode":"Stereo","EQBand":[{"param_name":"band31hz","value":3.0}]}'
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQSetLV2SourceBand:{str}:
     get:
       tags:
         - Equalizer
-      summary: Set LV2 source band
+      summary: Set LV2 EQ bands for a specific source
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQSetLV2SourceBand:<url-encoded JSON>
+
+        Per-source variant of EQSetLV2Band: applies the band settings only to
+        the named input source instead of globally. Same JSON/encoding and same
+        GEQ/PEQ band structure as EQSetLV2Band, with an added `source_name`:
+          {"source_name":"<src>","pluginURI":"<uri>","channelMode":"Stereo",
+           "EQBand":[ ...bands... ]}
+
+        source_name values seen: wifi, bluetooth, line-in, optical, hdmi,
+        phono, coaxial. Response is 'OK'.
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/{eq.rs,api.rs} (per-source LV2 write)"
+        - "pywiim (pywiim/api/peq.py)"
+      x-device-support:
+        wiim: yes
+        arylic: "EQ set read-only / unsupported"
       operationId: eqSetLV2SourceBand
       parameters:
         - name: "str"
@@ -1614,10 +1668,11 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: "URL-encoded JSON {source_name, pluginURI, channelMode, EQBand[...]}"
+          example: '{"source_name":"wifi","pluginURI":"http://moddevices.com/plugins/caps/EqNp","channelMode":"Stereo","EQBand":[{"param_name":"a_gain","value":-3.0}]}'
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQv2Delete:{str}:
     get:
       tags:
