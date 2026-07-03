@@ -5781,14 +5781,100 @@ paths:
   /getSubLPF:
     get:
       tags:
-        - Multiroom
-      summary: Get subwoofer LPF
+        - Audio output control
+      summary: Get subwoofer LPF / crossover status
       description: |-
-        ...
+        https://10.10.10.254/httpapi.asp?command=getSubLPF
+
+        Returns the subwoofer / low-pass-filter configuration and whether a
+        subwoofer is physically connected.
+
+        Availability: WiiM Ultra (fw 5.2+, original discovery), WiiM Pro
+        (fw 4.8+, tested), Pro Plus (likely). Amp/Mini untested. Arylic and
+        other LinkPlay devices return `unknown command`.
+
+        QUIRK - inverted filter flags: `main_filter` and `sub_filter` are
+        inverted vs intuition. A value of 1 means the filter is DISABLED, 0
+        means it is ENABLED/active.
+      externalDocs:
+        description: "pywiim (ADR 006)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/api/subwoofer.py; ADR 006)"
+        - "Wiim-Dashboard (docs/WIIM-API.md)"
+      x-device-support:
+        wiim_ultra: "yes (fw 5.2+)"
+        wiim_pro: "yes (fw 4.8+)"
+        wiim_pro_plus: "likely"
+        wiim_amp: untested
+        wiim_mini: untested
+        arylic: "unknown command"
       operationId: getSubLPF
       responses:
         "200":
           description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    description: "1 = subwoofer output enabled, 0 = disabled"
+                    example: 1
+                  plugged:
+                    type: integer
+                    description: "1 = a subwoofer is physically connected"
+                    example: 1
+                  cross:
+                    type: integer
+                    description: "Crossover frequency, Hz (range 30-250)"
+                    example: 85
+                  phase:
+                    type: integer
+                    description: "Phase in degrees (0 or 180)"
+                    example: 0
+                  level:
+                    type: integer
+                    description: "Level, dB (range -15..+15)"
+                    example: 0
+                  sub_delay:
+                    type: integer
+                    description: "Subwoofer delay, ms (range -200..+200)"
+                    example: -5
+                  main_filter:
+                    type: integer
+                    description: "INVERTED: 1 = mains high-pass DISABLED, 0 = enabled"
+                    example: 1
+                  sub_filter:
+                    type: integer
+                    description: "INVERTED: 1 = sub low-pass DISABLED, 0 = active"
+                    example: 1
+                  output_mode:
+                    type: integer
+                    example: 1
+                  mix_sub:
+                    type: integer
+                    example: 1
+                  delay_main_sub:
+                    type: string
+                    example: "1.0"
+                  linein_delay:
+                    type: number
+                    example: 0.00
+              example:
+                status: 1
+                delay_main_sub: "1.0"
+                plugged: 1
+                output_mode: 1
+                cross: 85
+                phase: 0
+                level: 0
+                mix_sub: 1
+                main_filter: 1
+                sub_filter: 1
+                sub_delay: -5
+                linein_delay: 0.00
   /setPlayModeVolumeEnable:{str}:
     get:
       tags:
@@ -5993,10 +6079,35 @@ paths:
   /setSubLPF:{str}:
     get:
       tags:
-        - Multiroom
-      summary: Set subwoofer LPF
+        - Audio output control
+      summary: Set subwoofer LPF / crossover parameter
       description: |-
-        ...
+        https://10.10.10.254/httpapi.asp?command=setSubLPF:<param>:<value>
+
+        Sets one subwoofer parameter. `str` is a `param:value` pair. Read the
+        current values back with getSubLPF. Same availability as getSubLPF
+        (WiiM Ultra fw 5.2+, WiiM Pro fw 4.8+; Arylic returns unknown command).
+
+        Known param:value forms and ranges:
+        - status:0|1          enable / disable subwoofer output
+        - cross:30..250       crossover frequency, Hz
+        - phase:0|180         phase, degrees
+        - level:-15..15       level, dB
+        - sub_delay:-200..200 subwoofer delay, ms
+        - main_filter:0|1     INVERTED (1 = mains high-pass disabled)
+        - sub_filter:0|1      INVERTED (1 = sub low-pass disabled)
+
+        e.g. setSubLPF:cross:85 , setSubLPF:level:-3 , setSubLPF:status:1
+      externalDocs:
+        description: "pywiim (ADR 006)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/api/subwoofer.py, api/constants.py)"
+        - "Wiim-Dashboard (docs/WIIM-API.md:117-122)"
+      x-device-support:
+        wiim_ultra: "yes (fw 5.2+)"
+        wiim_pro: "yes (fw 4.8+)"
+        arylic: "unknown command"
       operationId: setSubLPF
       parameters:
         - name: "str"
@@ -6004,10 +6115,11 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: "A param:value pair, e.g. cross:85 or status:1 (see description)"
+          example: "cross:85"
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /getAutoSenseEnable:
     get:
       tags:
