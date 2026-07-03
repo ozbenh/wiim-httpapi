@@ -9384,15 +9384,29 @@ components:
                 example: "My Device"
               ad:
                 type: string
-                description: MAC address
-                example: "00:11:22:33:44:55"
+                description: "Bluetooth MAC address (note the field name is `ad`, not `mac`)"
+                example: "9c:2a:be:2e:ce:f1"
               ct:
                 type: integer
-                description: Connection type
+                description: |-
+                  Connected flag: 1 = currently connected, 0 = known/paired
+                  but not connected. (Not a "connection type".)
                 example: 0
+              rssi:
+                type: integer
+                description: "Signal strength in dBm (negative), present in scan results"
+                example: -45
               role:
                 type: string
-                description: Role
+                description: |-
+                  Bluetooth role of the remote device:
+                  - "Audio Sink": an output target (speaker, A/V receiver) - the
+                    device sends audio to it
+                  - "Audio Source": an input (phone, tablet) - the device
+                    receives audio from it
+                enum:
+                  - "Audio Sink"
+                  - "Audio Source"
                 example: "Audio Source"
 
   #-------------------------------
