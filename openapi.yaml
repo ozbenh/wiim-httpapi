@@ -1841,9 +1841,24 @@ paths:
     get:
       tags:
         - Equalizer
-      summary: Get new EQ v2 list
+      summary: List EQ presets for a plugin
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQv2GetNewList:<url-encoded JSON>
+
+        Lists the available preset names for the given LV2 plugin. `str` is
+        URL-encoded JSON: {"pluginURI":"<uri>"}.
+
+        Response is a JSON object with two arrays, built-in `preset` and
+        user-defined `custom`, each element {"Name":"<string>"}:
+          {"preset":[{"Name":"Flat"},{"Name":"Rock"}],
+           "custom":[{"Name":"My Preset"}]}
+        (EQv2GetList is the older variant returning bare name lists.)
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/api.rs (EqPresetList: custom[]/preset[] of {Name})"
+        - "pywiim (pywiim/api/peq.py)"
       operationId: eqv2GetNewList
       parameters:
         - name: "str"
@@ -1851,17 +1866,47 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: 'URL-encoded JSON {"pluginURI":"<uri>"}'
+          example: '{"pluginURI":"http://moddevices.com/plugins/caps/EqNp"}'
       responses:
         "200":
           description: Successful response
+          content:
+            text/html:
+              schema:
+                type: object
+                properties:
+                  preset:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Name: {type: string}
+                  custom:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Name: {type: string}
+              example:
+                preset: [{Name: "Flat"}, {Name: "Rock"}, {Name: "Jazz"}]
+                custom: [{Name: "My Preset"}]
   /EQv2Load:{str}:
     get:
       tags:
         - Equalizer
-      summary: Load EQ v2 settings
+      summary: Load an EQ preset (global)
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQv2Load:<url-encoded JSON>
+
+        Loads a named preset for a plugin, applied globally. `str` is
+        URL-encoded JSON: {"pluginURI":"<uri>","Name":"<preset name>"}.
+        Name comes from EQv2GetNewList. Response is 'OK'.
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/api.rs (eq_load_preset_for)"
       operationId: eqv2Load
       parameters:
         - name: "str"
@@ -1869,17 +1914,27 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: 'URL-encoded JSON {"pluginURI":"<uri>","Name":"<preset>"}'
+          example: '{"pluginURI":"http://moddevices.com/plugins/caps/EqNp","Name":"Rock"}'
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQv2SourceLoad:{str}:
     get:
       tags:
         - Equalizer
-      summary: Source load EQ v2 settings
+      summary: Load an EQ preset for a specific source
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=EQv2SourceLoad:<url-encoded JSON>
+
+        Per-source variant of EQv2Load. `str` is URL-encoded JSON:
+        {"source_name":"<src>","pluginURI":"<uri>","Name":"<preset name>"}.
+        Response is 'OK'.
+      externalDocs:
+        description: "rustywiim (reverse-engineered WiiM EQ client)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "rustywiim-backup old/src/api.rs (eq_load_preset_for, per-source)"
       operationId: eqv2SourceLoad
       parameters:
         - name: "str"
@@ -1887,10 +1942,11 @@ paths:
           required: true
           schema:
             type: string
-          description: Unknown
+          description: 'URL-encoded JSON {source_name, pluginURI, Name}'
+          example: '{"source_name":"wifi","pluginURI":"http://moddevices.com/plugins/caps/EqNp","Name":"Rock"}'
       responses:
         "200":
-          description: Successful response
+          $ref: "#/components/responses/StringOK"
   /EQSourceOff:{str}:
     get:
       tags:
