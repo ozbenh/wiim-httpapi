@@ -9106,32 +9106,52 @@ components:
         mode:
           type: string
           description: |-
-            0: None 
-            1: AirPlay or AirPlay 2 
-            2: DLNA streaming 
-            10: Playing network content, e.g. vTuner, Home Media Share, Amazon Music, Deezer, etc 
-            11: playing UDISK (Local USB disk on device) 16: TF card playlist 20: playback start by HTTPAPI 
-            31: Spotify Connect 
-            32: TIDAL Connect 
-            40: AUX-In/Line-In input mode 
-            41: Bluetooth input mode 
-            42: External storage 
-            43: Optical-In input mode 
-            47: Line-In #2 input mode 
-            50: Mirror 
-            51: USBDAC input mode 
+            Source / play mode. Note: some values are firmware- and
+            vendor-dependent; the extra values below are observed on newer
+            WiiM and Arylic firmware.
+            0: None / Idle
+            1: AirPlay or AirPlay 2
+            2: DLNA streaming
+            3: QPlay (Arylic)
+            10: Playing network content, e.g. vTuner, Home Media Share, Amazon Music, Deezer, etc
+            11: playing UDISK (Local USB disk on device)
+            16: TF card playlist
+            20: playback started by HTTPAPI
+            31: Spotify Connect
+            32: TIDAL Connect
+            34: Lyrion / Squeezelite (LMS) [WiiM, wiim#188]
+            36: Qobuz Connect
+            40: AUX-In/Line-In input mode
+            41: Bluetooth input mode
+            42: External storage
+            43: Optical-In input mode
+            44: RCA (Audio Pro line-in)
+            45: Coaxial input (Arylic)
+            47: Line-In #2 input mode
+            49: HDMI input mode
+            50: Mirror
+            51: USBDAC input mode
+            54: Phono (Arylic)
+            58: HDMI ARC (Arylic)
             60: Voice mail
             99: The Device is a Guest in a Multiroom Zone
           example: "10"
         loop:
           type: string
           description: |-
-            Is a Combination of SHUFFLE and REPEAT modes 0: SHUFFLE:
-            disabled REPEAT: enabled - loop 1: SHUFFLE: disabled
-            REPEAT: enabled - loop once 2: SHUFFLE: enabled REPEAT:
-            enabled - loop 3: SHUFFLE: enabled REPEAT: disabled 4:
-            SHUFFLE: disabled REPEAT: disabled 5: SHUFFLE: enabled
-            REPEAT: enabled - loop once
+            Combination of SHUFFLE and REPEAT modes (READ value):
+            0: SHUFFLE disabled, REPEAT enabled - loop
+            1: SHUFFLE disabled, REPEAT enabled - loop once
+            2: SHUFFLE enabled, REPEAT enabled - loop
+            3: SHUFFLE enabled, REPEAT disabled
+            4: SHUFFLE disabled, REPEAT disabled
+            5: SHUFFLE enabled, REPEAT enabled - loop once
+
+            QUIRK: this READ value does not use the same scale as the value
+            you SET with setPlayerCmd:loopmode. For example, setting
+            loopmode:0 reads back here as loop=4 on WiiM firmware. Do not
+            round-trip the two directly. See setPlayerCmd:loopmode for the
+            write-side encoding and vendor differences.
           example: "-1"
         eq:
           type: string
@@ -9155,27 +9175,40 @@ components:
           example: "play"
         curpos:
           type: string
-          description: "Current position, in ms"
+          description: |-
+            Current position, normally in milliseconds.
+            QUIRK: streaming services (Spotify, Tidal, Qobuz) report position
+            in MICROSECONDS instead of ms on some firmware. Heuristic used by
+            pywiim: if the value exceeds 36000000 (10h in ms) treat it as us.
+            Known-ms sources include airplay, dlna, network, udisk, usb, wifi.
+            QUIRK: Bluetooth (mode 41) commonly reports curpos=0/totlen=0
+            while playing; and some firmware returns a constant garbage curpos
+            greater than totlen - treat curpos > totlen as invalid.
           example: "63634"
         offset_pts:
           type: string
-          description: "Offset position, in ms"
+          description: "Alternate/offset position; same unit and caveats as curpos"
           example: "63634"
         totlen:
           type: string
-          description: Track duration in ms. Zero when playing a live stream.
+          description: |-
+            Track duration, same unit as curpos (ms, or us for some streaming
+            sources). Zero when playing a live stream.
           example: "0"
         Title:
           type: string
-          description: hexed string of the track title
+          description: |-
+            Track title, hex-encoded UTF-8. Decode with
+            bytes.fromhex(s).decode("utf-8"), then HTML-unescape (the decoded
+            string may contain HTML entities such as &amp;).
           example: "4D6F726E696E67204C69676874"
         Artist:
           type: string
-          description: hexed string of the artist
+          description: "Artist, hex-encoded UTF-8 (decode as for Title)"
           example: "4F77656E20526965676C696E67"
         Album:
           type: string
-          description: hexed string of the album
+          description: "Album, hex-encoded UTF-8 (decode as for Title)"
           example: "4D6F726E696E67204C69676874"
         alarmflag:
           type: string
@@ -9198,6 +9231,14 @@ components:
           type: string
           description: "Current mute state 0: Not muted 1: Muted"
           example: "0"
+        RSSI:
+          type: string
+          description: "Wi-Fi signal strength (dBm), present on some firmware"
+          example: "-55"
+        WifiChannel:
+          type: string
+          description: "Current Wi-Fi channel, present on some firmware"
+          example: "6"
     TrackMetadata: # Can be referenced as "#/components/schemas/TrackMetadata"
       type: object
       properties:
