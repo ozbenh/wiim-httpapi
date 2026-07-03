@@ -4782,7 +4782,18 @@ paths:
         - Multiroom
       summary: Joining a multi-room group
       description: |-
-        ...
+        http://10.10.10.254/httpapi.asp?command=multiroom:JoinGroup:IP=<ip>:uuid=<uuid>
+
+        Sent to a device to make it JOIN the group led by the master at the
+        given IP/uuid (i.e. issue this to the future slave, pointing at the
+        master).
+
+        Note: this is the modern router-based join. Older / alternative join
+        mechanisms use ConnectMasterAp (see ConnectMasterAp:JoinGroupMaster
+        and the WiFi-Direct form).
+      externalDocs:
+        description: LinkPlayAPI by n4archive
+        url: "https://github.com/n4archive/LinkPlayAPI/blob/master/api.md"
       operationId: multiroomJoinGroup
       parameters:
         - name: "IP"
@@ -4790,13 +4801,85 @@ paths:
           required: true
           schema:
             type: string
-          description: The IP address of the multi-room group to join.
+          description: The IP address of the master device to join.
         - name: "uuid"
           in: path
           required: true
           schema:
             type: string
-          description: The UUID of the multi-room group to join.
+          description: The UUID of the master device to join.
+      responses:
+        "200":
+          description: Successful response
+  "/ConnectMasterAp:JoinGroupMaster:eth{masterIp}:wifi0.0.0.0":
+    get:
+      tags:
+        - Multiroom
+      summary: Join a multiroom group (router / eth mode)
+      description: |-
+        http://10.10.10.254/httpapi.asp?command=ConnectMasterAp:JoinGroupMaster:eth<masterIp>:wifi0.0.0.0
+
+        Router-based multiroom join used on modern LinkPlay/Arylic firmware
+        (fw >= 4.2.8020): the device joins the group whose master is reachable
+        at <masterIp> over the existing network, without moving to the
+        master's own WiFi-Direct subnet. Send this to the future slave.
+
+        For older devices (fw < 4.2.8020) see the WiFi-Direct ConnectMasterAp
+        form instead.
+      externalDocs:
+        description: "developer.arylic.com / pywiim (multiroom join)"
+        url: "https://developer.arylic.com/httpapi/"
+      x-sources:
+        - "pywiim (pywiim/group.py; docs/design/DEVICE_PROFILES.md)"
+        - "developer.arylic.com/httpapi (ConnectMasterAp:JoinGroupMaster)"
+      parameters:
+        - name: "masterIp"
+          in: path
+          required: true
+          schema:
+            type: string
+          description: IP address of the group master
+          example: "192.168.1.100"
+      responses:
+        "200":
+          description: Successful response
+  "/ConnectMasterAp:ssid={ssidHex}:ch={ch}:auth=OPEN:encry=NONE:pwd=:chext=0":
+    get:
+      tags:
+        - Multiroom
+      summary: Join a multiroom group (WiFi-Direct, legacy)
+      description: |-
+        http://10.10.10.254/httpapi.asp?command=ConnectMasterAp:ssid=<ssidHex>:ch=<ch>:auth=OPEN:encry=NONE:pwd=:chext=0
+
+        Legacy WiFi-Direct multiroom join for first-generation devices
+        (fw < 4.2.8020). The slave connects to the master's own WiFi-Direct
+        hotspot and moves onto the 10.10.10.x subnet. `ssidHex` is the master
+        hotspot SSID hex-encoded; `ch` is its WiFi channel.
+
+        Modern devices use the router-based ConnectMasterAp:JoinGroupMaster
+        form (or multiroom:JoinGroup) instead.
+      externalDocs:
+        description: "pywiim (WiFi-Direct multiroom, Gen1)"
+        url: "https://github.com/mjcumming/pywiim"
+      x-sources:
+        - "pywiim (pywiim/group.py; docs/design/DEVICE_PROFILES.md)"
+      x-device-support:
+        gen1_linkplay: "yes (fw < 4.2.8020)"
+        modern: "use ConnectMasterAp:JoinGroupMaster / multiroom:JoinGroup"
+      parameters:
+        - name: "ssidHex"
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Master hotspot SSID, hex-encoded
+        - name: "ch"
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Master hotspot WiFi channel
+          example: 6
       responses:
         "200":
           description: Successful response
