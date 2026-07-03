@@ -2548,16 +2548,29 @@ paths:
       description: |
         http://10.10.10.254/httpapi.asp?command=setPlayerCmd:switchmode:%s
 
-        the mode can be the text as below:
-        - line-in (it refers to aux-in too)
+        Mode names are CASE-SENSITIVE.
+
+        Officially documented values:
+        - line-in (also refers to aux-in)
         - bluetooth
         - optical
         - udisk
         - wifi
-        - HDMI
+
+        Community / extended values (device- and firmware-dependent; only
+        offer inputs advertised in the getStatusEx `plm_support` bitmask):
+        - co-axial, HDMI, ARC, phono, RCA, XLR, PCUSB, line-in2, optical2,
+          co-axial2, cd
+
+        QUIRK: vendors differ. Arylic uses hyphenated names (e.g. `line-in`)
+        and its own set incl. `PCUSB` for USB-DAC; some names above are not
+        accepted on all firmware.
       externalDocs:
         description: HTTP API for WiiM PRODUCTS Version 1.2
         url: "https://www.wiimhome.com/pdf/HTTP%20API%20for%20WiiM%20Products.pdf"
+      x-sources:
+        - "illianoaoi/Wiim-Dashboard (docs/WIIM-API.md - extended source names)"
+        - "developer.arylic.com/httpapi (Arylic switchmode values)"
       parameters:
         - name: mode
           in: path
@@ -2571,6 +2584,16 @@ paths:
               - udisk
               - wifi
               - HDMI
+              - co-axial
+              - ARC
+              - phono
+              - RCA
+              - XLR
+              - PCUSB
+              - line-in2
+              - optical2
+              - co-axial2
+              - cd
       operationId: setPlayerCmdSwitchMode
       responses:
         "200":
